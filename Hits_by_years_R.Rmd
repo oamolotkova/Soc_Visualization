@@ -1,0 +1,71 @@
+---
+title: "Hits by years"
+author: "Olga Molotkova"
+date: "2024-05-10"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library(ggplot2)
+library(dplyr)
+```
+
+```{r}
+wdir <- 'C://Users//Lenovo//Documents//ВШЭ//ANR-lab//Данные для диссертации'
+setwd(wdir)
+# Creating dataframe
+Y <- read.csv(".//Year_hits (1).clu",header=FALSE,skip=2)$V1
+df <- data.frame(Y)
+# Checking the results
+table(df)
+```
+
+
+```{r}
+#Getting rid of rows where year = 0 (seems to be a mistake)
+rdf <- subset(df, Y != 0) 
+table(rdf)
+```
+
+```{r}
+ndf <- rdf %>%
+  group_by(Y) %>%
+  count(Y)
+# Checking the result
+ndf
+```
+
+
+```{r}
+# Creating visualization
+p <- ggplot(ndf, aes(x = Y, y = n))+
+   geom_line(color = 'lightblue', size = 0.7) +
+  labs(title = 'Распределение статей (hits) по годам', x = "Год", y = "Кол-во, шт.") +
+  geom_label(data = ndf[which.min(ndf$n),], aes(label = sprintf('min = %s', min(ndf$n)), hjust = -0.1)) + 
+  geom_label(data = ndf[which.max(ndf$n),], aes(label = sprintf('max = %s', max(ndf$n)), vjust=-0.2)) +
+  theme_light()+ 
+  scale_x_continuous(breaks = seq(1992,2022,2)) +
+  scale_y_continuous(limits = c(0,400), breaks = seq(0,400,100))
+p
+```
+
+
+```{r}
+ggsave("HitsByYears_plot.png", plot = p, width = 6, height = 4, units = "in")
+```
+
+
+
+
+
+
+
+
+
+
+
