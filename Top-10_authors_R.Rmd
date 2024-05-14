@@ -1,0 +1,29 @@
+---
+title: "Top-10_authors"
+author: "Olga Molotkova"
+date: "2024-05-14"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(ggplot2)
+
+#Creating dataframe from Pajek statstics manually. There should be more sophisticated ways to work with vectors from Pajek, I'll check later.
+
+df <- data.frame(Author = c("TROTSUK_I", "KRAVCHEN_S", "TOSHCHEN_Z", "PUZANOVA_Z", "ZBOROVSK_G", "LAPIN_N", "IVANOV_V", "TIKHONOV_N", "GORSHKOV_M", "NARBUT_N"), works = c(48, 34, 33, 32, 30, 27, 26, 24, 24, 22))
+
+#Creating visualization 
+p <- ggplot(df, aes(x = forcats::fct_reorder(Author, works), y = works)) + geom_col(fill = 'lightblue') + coord_flip() +
+  labs(x = "Автор", y = "Кол-во статей, шт.") + geom_text(aes(label = works), hjust = -1) +
+  theme_light()
+  p
+```
+
+
+```{r}
+ggsave("Top10authors(Yanitski)_plot_labels_no_title.png", plot = p, width = 10, height = 6, units = "in")
+```
