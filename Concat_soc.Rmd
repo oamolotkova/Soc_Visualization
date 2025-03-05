@@ -1,0 +1,234 @@
+---
+title: "Soc_concat"
+author: "Olga Molotkova"
+date: "2025-03-04"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Объединение файлов
+
+## Новые файлы и файл со всеми типами публикаций
+
+Я взяла три txt-файла от Василисы в формате full-record с цитатами:
+*savedrecs*, *savedrecs (1)*, *savedrecs (2)*. Запрос был PY=(2022-2024) AND SU=Sociology and CU=Russia. Получилась выдача на 1264 публикации.
+
+Присоединю их к общему файлу *CompleteData_Sociology* из папки https://disk.yandex.ru/client/disk/ANR-Lab%20General/Projects/WoS%20Russian%20Science/WoS%20Russia/Subsets/Preprocessing%20for%20Pajek/Sociology
+
+Для начала загружу файлы в библиометрикс, чтобы просмотреть содержимое файлов, сравнить таблицы.
+
+```{r}
+#install.packages('bibliometrix')
+#library(bibliometrix) 
+#bibliometrix:: biblioshiny()
+#biblioshiny(maxUploadSize=600) #for big files
+```
+
+```{r}
+library(readxl)
+library(dplyr)
+```
+
+```{r}
+savedrecs <- read_excel("Bibliometrix-Export-savedrecs.xlsx")
+glimpse(savedrecs)
+```
+```{r}
+savedrecs1 <- read_excel("Bibliometrix-Export-savedrecs (1).xlsx")
+glimpse(savedrecs1)
+```
+
+```{r}
+savedrecs2 <- read_excel("Bibliometrix-Export-savedrecs (2).xlsx")
+glimpse(savedrecs2)
+```
+```{r}
+CompleteData_Sociology <- read_excel("Bibliometrix-Export-CompleteData_Sociology.xlsx")
+glimpse(CompleteData_Sociology)
+```
+
+Количество столбцов не совпадает. Проверим, какие столбцы отличаются в датафреймах.
+
+```{r}
+#install.packages("janitor")
+library("janitor")
+```
+
+```{r}
+janitor::compare_df_cols(savedrecs, savedrecs1, savedrecs2, CompleteData_Sociology)
+```
+Смотрим на сайте значения отсутсвующих в части датафреймов столбцов (N/A): https://images.webofknowledge.com/images/help/WOS/hs_wos_fieldtags.html
+
+BE - Editors  
+BN - International Standard Book Number (ISBN)  
+CL - Conference Location  
+CT - Conference Title  
+CY - Conference Date    
+C3 - **??**  
+EF - **End of File**  
+GP - Book Group Authors  
+HC - ESI Highly Cited Paper. Note that this field is valued only for ESI subscribers.  
+HO - Conference Host  
+HP - ESI Hot Paper. Note that this field is valued only for ESI subscribers.  
+SE - Book Series Title  
+SP - Conference Sponsors  
+SU - Supplement  
+
+Показались странными столбцы С3 и EF, проверила в текстовых файлах:
+EF - просто аббревиатура в конце, можно удалить. 
+C3 - вероятно, адрес автора, как и C1. Интересно, что написание C1 тоже отличается в файлах.
+
+1. Пример C3 в файле **savedrecs**: Russian Presidential Academy of National Economy & Public Administration
+2. Пример C1 в файле **savedrecs**: [Malakhov, Vladimir S.] RANEPA, Sch Adv Studies Humanities, Inst Social Sci, Vernadsky prosp 82, Moscow 119571, Russia.
+3. Пример C1 в файле **СompleteData_Sociology**: C1 RUSSIAN NATL PUBL OPIN RES CTR,MOSCOW,RUSSIA.
+
+Проверим, какие типы публикаций в файлах.
+
+```{r}
+savedrecs$DT <- as.factor(savedrecs$DT)
+summary(savedrecs$DT)
+```
+```{r}
+savedrecs1$DT <- as.factor(savedrecs1$DT)
+summary(savedrecs1$DT)
+```
+
+
+```{r}
+savedrecs2$DT <- as.factor(savedrecs2$DT)
+summary(savedrecs2$DT)
+```
+
+
+```{r}
+CompleteData_Sociology$DT <- as.factor(CompleteData_Sociology$DT)
+summary(CompleteData_Sociology$DT)
+```
+Хотя в файлах типы публикаций не полностью совпадают, значительно отличается файл CompleteData_Sociology, в котором есть главы книг и материалы конференций.
+
+Так же интересно посмотреть, почему некоторые столбцы в датафреймах типа logical: AU_UN_NR, SU, EA.
+
+```{r}
+summary(CompleteData_Sociology$AR)
+```
+```{r}
+summary(CompleteData_Sociology$AU_UN_NR)
+summary(savedrecs$AU_UN_NR)
+summary(savedrecs1$AU_UN_NR)
+summary(savedrecs2$AU_UN_NR)
+```
+
+```{r}
+summary(CompleteData_Sociology$SU)
+```
+
+Видимо, это тоже незаполненные значения.
+
+
+## Новые файлы и файл только со статьями
+
+Убираем вручную столбец "EF" из файлов *savedrecs*, *savedrecs1*, *savedrecs2*, так как он обозначает конец файла. Снова открываем библиометрикс.
+
+Загружаем файлы *savedrecs*, *savedrecs1*, *savedrecs2* без столбца "EF" и файл *Sociology clean filtered*, в котором Даша Осокина отбирала только статьи.
+
+```{r}
+#install.packages('bibliometrix')
+## library(bibliometrix) 
+## bibliometrix:: biblioshiny()
+## biblioshiny(maxUploadSize=600) #for big files
+```
+
+```{r}
+savedrecs <- read_excel("Bibliometrix-Export-savedrecs.xlsx")
+glimpse(savedrecs)
+```
+
+```{r}
+savedrecs1 <- read_excel("Bibliometrix-Export-savedrecs (1).xlsx")
+glimpse(savedrecs1)
+```
+
+```{r}
+savedrecs2 <- read_excel("Bibliometrix-Export-savedrecs (2).xlsx")
+glimpse(savedrecs2)
+```
+```{r}
+Sociology_clean_filtered <- read_excel("Bibliometrix-Export-Sociology_clean_filtered.xlsx")
+glimpse(Sociology_clean_filtered)
+```
+
+```{r}
+janitor::compare_df_cols(savedrecs, savedrecs1, savedrecs2, Sociology_clean_filtered)
+```
+Отсутствующие столбцы:  
+C3 - ??  
+EA - Early access date  
+HC - ESI Highly Cited Paper. Note that this field is valued only for ESI subscribers.  
+HP - ESI Hot Paper. Note that this field is valued only for ESI subscribers.  
+
+```{r}
+Sociology_clean_filtered$DT <- as.factor(Sociology_clean_filtered$DT)
+summary(Sociology_clean_filtered$DT)
+```
+
+```{r}
+savedrecs$DT <- as.factor(savedrecs$DT)
+summary(savedrecs$DT)
+```
+
+```{r}
+savedrecs1$DT <- as.factor(savedrecs1$DT)
+summary(savedrecs1$DT)
+```
+
+```{r}
+savedrecs2$DT <- as.factor(savedrecs2$DT)
+summary(savedrecs2$DT)
+```
+
+```{r}
+summary(Sociology_clean_filtered$BE)
+```
+
+# Сохранение итогового файла Soc_1992_2024 со всеми типами публикаций
+
+Кажется, что по типам публикаций файлы от Василисы *savedrecs*, *savedrecs (1)*, *savedrecs (2)* больше подходят к файлу *CompleteData_Sociology.txt* - со всеми типами публикаций. Соединим их.
+
+
+```{r}
+getwd()
+setwd("C:\\Users\\Lenovo\\Downloads\\Pajek Thesis")
+files <- dir()
+files
+if (is.element(el = "CompleteWoSDataBase.txt", set = files) == TRUE) file.remove("CompleteWoSDataBase.txt")
+for (i in 1:length(files)){
+  tmp <- readLines(files[i])
+  cat(tmp, file = "Soc_1992_2024.txt", sep = "\n", append = TRUE)
+}
+```
+
+
+Загружаем полученный файл в библиометрикс, смотрим.
+
+
+```{r}
+Soc_1992_2024 <- read_excel("Bibliometrix-Export-Soc_1992_2024.xlsx")
+glimpse(Soc_1992_2024)
+```
+
+```{r}
+janitor::compare_df_cols(savedrecs, savedrecs1, savedrecs2, Sociology_clean_filtered, Soc_1992_2024)
+```
+```{r}
+Soc_1992_2024$DT <- as.factor(Soc_1992_2024$DT)
+summary(Soc_1992_2024$DT)
+```
+
+```{r}
+summary(Soc_1992_2024$PY)
+```
+
+Итого, получился файл *Soc_1992_2024* со всеми типами публикаций с 1992 по 2024 г. (9,179 шт.), с 70 столбцами (типы метаданных, заполнены не все). Дубликаты не удалены.
